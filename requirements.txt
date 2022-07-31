@@ -1,0 +1,7 @@
+python-socketio[client]==4.6.1
+keyboard==0.13.5
+numpy==1.22.3
+Pillow==9.2.0
+PyAutoGUI==0.9.53
+requests==2.27.1
+selenium==4.3.0
