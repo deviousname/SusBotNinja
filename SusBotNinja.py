@@ -288,7 +288,7 @@ class SusBot():
         keyboard.add_hotkey("shift+insert", lambda: self.change_speed('decrease')) #decrease bot speed
         keyboard.add_hotkey("shift+del", lambda: self.change_speed('increase'))#increase bot speed
         keyboard.add_hotkey((key:='s'),lambda:self.circle_outline(key)) #draw a circle
-        keyboard.add_hotkey((key1:='shift+w'),lambda:self.bezier_curve(key1)) #auto-pathing
+        keyboard.add_hotkey((key1:='shift+w'),lambda:self.wyrvern(key1)) #auto-pathing
         keyboard.add_hotkey((key2:='v'),lambda:self.bamboo_shaft(key2)) #measures distance
         keyboard.add_hotkey((key3:='shift+e'),lambda:self.way_of_the_dragon(key3)) #if its flammable, it burns
         keyboard.add_hotkey((key4:='a'),lambda:self.mighty_wind_alt(key4))#single color replacing bucket fill
