@@ -10,7 +10,6 @@ import math
 import random
 import time
 import urllib.request
-import pyautogui
 import math
 import PIL
 import numpy as np
@@ -38,9 +37,11 @@ controls = ['',
             "['s' # drag to draw circle                         ]",
             "['shift+e' # if its flammable, it burns            ]",
             "['a' # single color replacing bucket fill          ]",
-            "['d' # easy river draw, works like bamboo_shaft    ]",
+            "['d' # draw a bendy river                          ]",
+            "['r' # draw single tree, drag/release for forest   ]",
             "['shift+r' # pour water from top to bottom         ]",
             "['shift+a' # every color replacing bucket fill     ]",
+            "['o' # bootleg missile                             ]",
             "['f8' # drag it across an area to copy             ]",
             "['f9' # press to paste, centered at mouse location ]",
             '[                                                  ]',
@@ -51,8 +52,8 @@ controls = ['',
 #### Options: #############
 autologin = False # True/False - requires Reddit account linked to Pixelplace if True
 chart = 7 # map number
-stop_key = 'shift+d' 
-unit_measurement = 'pixels'
+stop_key = 'shift+d' # press this hotkey bind to stop the bot while its drawing something
+unit_measurement = 'pixels' #change it to whatever you want; miles, feet, bannanas...
 ###########################
 ###########################
 
@@ -63,6 +64,7 @@ colors =[(255,255,255),(196,196,196),(136,136,136),(85,85,85),(34,34,34),
         (187,79,0),(255,117,95),(255,196,159),(255,223,204),(255,167,209),
         (207,110,228),(236,8,236),(130,0,128),(81,0,255),(2,7,99),(0,0,234),
         (4,75,255),(101,131,207),(54,186,255),(0,131,199),(0,211,221),(69,255,200)]
+
 null = [(204,204,204)]
 ocean = [o for o in colors if colors.index(o) in range(30,38+1)]
 fire = [f for f in colors if colors.index(f) in (11,12,13,14,20)]
@@ -70,7 +72,6 @@ smoke = [s for s in colors if colors.index(s) in range(1,5)]
 leaves = [l for l in colors if colors.index(l) in range(6,10+1)]
 trunks = [t for t in colors if colors.index(t) in range(15,17+1)]
 sand = [sa for sa in colors if colors.index(sa) in (11,12,24,25)]
-chum = ocean + fire + smoke + leaves + trunks
 
 class SusBot():
     def __init__ (self):
@@ -91,7 +92,7 @@ class SusBot():
         self.hotkeys()
         self.colorfilter = [None, None, None, None, None, None, None, None, None, None]
         self.color = random.randint(0, len(colors))
-        self.borders = True
+        self.borders = False
         
     def login(self):
         driver.get("https://pixelplace.io/api/sso.php?type=2&action=login")
@@ -131,7 +132,7 @@ class SusBot():
         @sio.on("p")
         def update_pixels(p: tuple):
             try:
-                for i in p:         
+                for i in p:        
                     self.cache[i[0], i[1]] = colors[i[2]]
             except:
                 pass
@@ -186,18 +187,9 @@ class SusBot():
             return "Prime"
         
     def cy_cols(self, a):
-        if random.random() > .5:
-            a += 1
-            if a == 6:
-                a = 4
-            elif a > 38:
-                a = 0
-        else:
-            a -= 1
-            if a == 5:
-                a = 7
-            elif a < 0:
-                a = 37
+        a += 1
+        if a > len(colors):
+            a = 0
         self.color = a
         return self.color
     
@@ -234,8 +226,9 @@ class SusBot():
             for coordinate in coordinate_list:
                 x_sum += coordinate[0]
                 y_sum += coordinate[1]
-        finally:
-            return int(x_sum/len(coordinate_list)), int(y_sum/len(coordinate_list))  
+            return int(x_sum/len(coordinate_list)), int(y_sum/len(coordinate_list))
+        except:
+            pass
         
     def change_speed(self, opt): #works great
         global speed
@@ -290,19 +283,71 @@ class SusBot():
             
     def hotkeys(self):
         keyboard.on_press(self.onkeypress)#1-9 buttons equip currently selected colors
-        keyboard.add_hotkey("f8", lambda: self.copypaste('copy', "f8"))
-        keyboard.add_hotkey("f9", lambda: self.copypaste('paste', "f9"))
-        keyboard.add_hotkey("shift+insert", lambda: self.change_speed('decrease'))
-        keyboard.add_hotkey("shift+del", lambda: self.change_speed('increase'))
-        keyboard.add_hotkey((key:='s'),lambda:self.circle_outline(key))
-        keyboard.add_hotkey((key1:='shift+w'),lambda:self.wyrvern(key1)) #auto-pathing river spirit
+        keyboard.add_hotkey("f8", lambda: self.copypaste('copy', "f8")) #press and hold button, move mouse to right and down, release to copy
+        keyboard.add_hotkey("f9", lambda: self.copypaste('paste', "f9")) #press to paste if you have copied
+        keyboard.add_hotkey("shift+insert", lambda: self.change_speed('decrease')) #decrease bot speed
+        keyboard.add_hotkey("shift+del", lambda: self.change_speed('increase'))#increase bot speed
+        keyboard.add_hotkey((key:='s'),lambda:self.circle_outline(key)) #draw a circle
+        keyboard.add_hotkey((key1:='shift+w'),lambda:self.bezier_curve(key1)) #auto-pathing
         keyboard.add_hotkey((key2:='v'),lambda:self.bamboo_shaft(key2)) #measures distance
         keyboard.add_hotkey((key3:='shift+e'),lambda:self.way_of_the_dragon(key3)) #if its flammable, it burns
         keyboard.add_hotkey((key4:='a'),lambda:self.mighty_wind_alt(key4))#single color replacing bucket fill
-        keyboard.add_hotkey((key5:='d'),lambda:self.river_bend(key5))#easy river draw, works like bamboo_shaft
+        keyboard.add_hotkey((key5:='d'),lambda:self.river_bend(key5))#draws a bendy river
         keyboard.add_hotkey((key6:='shift+r'),lambda:self.surging_waves(key6)) #pour water from top to bottom
         keyboard.add_hotkey((key7:='shift+a'),lambda:self.mighty_wind(key7)) #every color replacing bucket fill
-        keyboard.add_hotkey('r',lambda:self.tree()) #draw tree
+        keyboard.add_hotkey((keytree:='r'),lambda:self.tree(keytree)) #draw tree
+        keyboard.add_hotkey((key9:='['),lambda:self.thick_line(key9)) #2 pixels wide
+        keyboard.add_hotkey((key10:='o'),lambda:self.bootleg_missle(key10))#shhh dont tell anyone
+
+    def bootleg_missle(self, key):
+        try:
+            color = self.return_color()
+            x, y = self.xy()
+            for bx in range(x-3, x+4):
+                for by in range(y-4, y+3):
+                    try:
+                        sio.emit("p",[bx, by, self.cy_cols(colors.index(self.cache[bx, by])), 1])
+                    except:
+                        pass
+            time.sleep(speed * 55)
+        except Exception as e:
+            print(e)
+            pass
+        
+    def thick_line(self, key):
+        try:
+            self.color = self.return_color()
+            start, end = (xy:=self.xy()),xy
+            while keyboard.is_pressed(key):
+                pass
+            end = self.xy()
+            x1, y1 = start
+            x2, y2 = end
+            x_difference = x2 - x1
+            y_difference = y2 - y1
+            x_length = abs(x_difference)
+            y_length = abs(y_difference)
+            length = max([x_length, y_length])
+            if length == 0:
+                length = 1
+            if x_difference == 0:
+                x_difference = 1
+            if y_difference == 0:
+                y_difference = 1
+            slope = y_difference / x_difference
+            self.start = time.time()
+            for i in range(1, length):
+                if keyboard.is_pressed(stop_key):
+                    print('Canceling job.')
+                    return
+                x3 = int(x1 + (i * (x_difference / length)))
+                y3 = int(y1 + (i * (y_difference / length)))
+                self.emitsleep(x3, y3, self.color, [])
+                self.emitsleep(x3+1, y3, self.color, [])
+                self.emitsleep(x3, y3+1, self.color, [])
+                self.emitsleep(x3+1, y3+1, self.color, [])
+        except:
+            pass
         
     def copypaste(self, option, key): #this is the copy/paster
         try:
@@ -335,26 +380,41 @@ class SusBot():
         except:
             pass
         
-    def tree(self):
-        try:
-            tree_order = ()
-            self.xy()
-            x, y = self.x, self.y
-            bark=colors.index(random.choice(trunks))
-            for a in range(4):
-                tree_order+=([x,y-a,bark],)
-            leaf=colors.index(random.choice(leaves))
-            y -= a
-            for b in range(3):
-                tree_order+=([x+b-1,y,leaf],)
-            y -= 1
-            for c in range(3):
-                tree_order+=([x+c-1,y,leaf],)
-            y -= 1
-            tree_order+=([x,y,leaf],)
-            self.start = time.time()
-            for Y in tree_order:
-                self.emitsleep(Y[0],Y[1], Y[2], [None])
+    def tree(self, key):
+        try:            
+            self.x, self.y = self.xy()
+            def tree_data():
+                tree_order = ()
+                x, y = self.x, self.y
+                bark=colors.index(random.choice(trunks))
+                for a in range(4):
+                    tree_order+=([x,y-a,bark],)
+                leaf=colors.index(random.choice(leaves))
+                y -= a
+                for b in range(3):
+                    tree_order+=([x+b-1,y,leaf],)
+                y -= 1
+                for c in range(3):
+                    tree_order+=([x+c-1,y,leaf],)
+                y -= 1
+                tree_order+=([x,y,leaf],)
+                self.start = time.time()
+                for Y in tree_order:
+                    self.emitsleep(Y[0],Y[1], Y[2], leaves+trunks+null+ocean)
+            tree_data()
+            tx1, ty1 = self.x, self.y            
+            while True:
+                if not keyboard.is_pressed(key):
+                    tx2, ty2 = self.xy()
+                    if self.distance([tx1, ty1],[tx2, ty2]) > 8:
+                        loop = True              
+                    break
+            if loop == True:
+                while True:
+                    if keyboard.is_pressed(stop_key):
+                        return
+                    self.x, self.y =  random.randint(tx1, tx2), random.randint(ty1, ty2)
+                    tree_data()
         except:
             pass
     
@@ -396,7 +456,7 @@ class SusBot():
                     dy += 2
         except:
             pass
-        
+            
     def river_bend(self, key):#aim and fire a river into the distance
         try:
             river_thickness_fill_list = []
@@ -434,7 +494,7 @@ class SusBot():
                 self.emitsleep(x,y,self.oceaneer(), null+ocean)
         except:
             pass
-                    
+        
     def wyrvern(self, key):#auto tunneling river spirit
         try:
             control_group = []
@@ -481,7 +541,7 @@ class SusBot():
                 start = x, y
         except:
             pass
-        
+
     def surging_waves(self, key):
         try:
             filters = ocean + leaves + trunks + smoke
@@ -522,7 +582,7 @@ class SusBot():
         
     def mighty_wind(self, key):#bucket tool
         try:
-            filters = [None]
+            filters = [i for i in self.colorfilter]
             fill_list = []
             border_list = []
             self.color = self.return_color()
@@ -550,6 +610,10 @@ class SusBot():
                 x, y = fill_list.pop()
                 random.shuffle(execoptions)
                 for i in execoptions:
+                    try:
+                        self.color = colors.index(random.choice(self.colorfilter))
+                    except:
+                        pass
                     exec(f'if {i}')
                 if self.cache[x+1, y] in null and self.cache[x, y] not in null:
                     border_list.append([x,y])
@@ -577,7 +641,8 @@ class SusBot():
         try:
             fill_list = []
             border_list =  []
-            self.color = self.return_color()
+            color = self.return_color()
+            oceanstuff = False
             border_color = self.color + r if self.color + (r := random.choice([-1,1])) in range(len(colors)) else self.color - r
             def locate():
                 self.xy()
@@ -585,15 +650,18 @@ class SusBot():
             locate()
             filters = [i for i in colors if i != self.cache[self.x, self.y]]
             old_color = self.cache[self.x, self.y]
-            execoptions = ['self.emitsleep(x+1,y,self.color, filters):fill_list.append([x+1,y])',
-                           'self.emitsleep(x-1,y,self.color, filters):fill_list.append([x-1,y])',
-                           'self.emitsleep(x,y+1,self.color, filters):fill_list.append([x,y+1])',
-                           'self.emitsleep(x,y-1,self.color, filters):fill_list.append([x,y-1])']     
+            execoptions = ['self.emitsleep(x+1,y,color if oceanstuff == False else self.oceaneer(), filters if oceanstuff == False else ocean + leaves + trunks):fill_list.append([x+1,y])',
+                           'self.emitsleep(x-1,y,color if oceanstuff == False else self.oceaneer(), filters if oceanstuff == False else ocean + leaves + trunks):fill_list.append([x-1,y])',
+                           'self.emitsleep(x,y+1,color if oceanstuff == False else self.oceaneer(), filters if oceanstuff == False else ocean + leaves + trunks):fill_list.append([x,y+1])',
+                           'self.emitsleep(x,y-1,color if oceanstuff == False else self.oceaneer(), filters if oceanstuff == False else ocean + leaves + trunks):fill_list.append([x,y-1])']     
             self.start = time.time()
             print(f'Strong Wind')
             while len(fill_list) > 0:
                 if keyboard.is_pressed(key):
                     locate()
+                elif keyboard.is_pressed('w'):
+                    oceanstuff = True if oceanstuff == False else False
+                    time.sleep(speed*2)
                 elif keyboard.is_pressed('shift+o'):
                     self.borders = True if self.borders == False else False
                     print(f'Borders: {self.borders}')
@@ -602,18 +670,27 @@ class SusBot():
                     print('Canceling...')
                     return
                 x, y = fill_list.pop()
-                random.shuffle(execoptions)
-                for i in execoptions:
-                    exec(f'if {i}')
-                if self.cache[x+1, y] not in [old_color] + [colors[self.color]]:
-                    border_list.append([x,y])
-                if self.cache[x-1, y] not in [old_color] + [colors[self.color]]:
-                    border_list.append([x,y])
-                if self.cache[x, y+1] not in [old_color] + [colors[self.color]]:
-                    border_list.append([x,y])
-                if self.cache[x, y-1] not in [old_color] + [colors[self.color]]:
-                    border_list.append([x,y])
-            if self.borders == True:
+                try:
+                    cachepixel = self.cache[x, y]
+                    random.shuffle(execoptions)
+                    for i in execoptions:
+                        try:
+                            color = colors.index(random.choice(self.colorfilter))
+                        except:
+                            pass
+                        exec(f'if {i}')
+                    if oceanstuff == False:
+                        if self.cache[x+1, y] not in [old_color] + [colors[self.color]]:
+                            border_list.append([x,y])
+                        if self.cache[x-1, y] not in [old_color] + [colors[self.color]]:
+                            border_list.append([x,y])
+                        if self.cache[x, y+1] not in [old_color] + [colors[self.color]]:
+                            border_list.append([x,y])
+                        if self.cache[x, y-1] not in [old_color] + [colors[self.color]]:
+                            border_list.append([x,y])
+                except:
+                    pass
+            if self.borders == True and oceanstuff == False:
                 self.start = time.time()
                 while len(border_list) > 0:
                     if keyboard.is_pressed(stop_key):
@@ -825,6 +902,7 @@ class SusBot():
         
 speed = 0.02 # default speed
 default_speed = speed
+
 susbot = SusBot()
 for control in controls:
     print(control)
