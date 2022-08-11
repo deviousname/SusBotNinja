@@ -4,7 +4,7 @@ Newest SusBot flavour... I would say it taste like a ninja, but ninjas are faste
 Tutorial for installing: https://www.youtube.com/watch?v=CVW3RJPLLvc
 
 # -------
-    Written for Python 3.8.10 on Windows 10
+    Written for Python 3.10.5 on Windows 10
 # -------
     download and unzip SusBotNinja
     open your command prompt
