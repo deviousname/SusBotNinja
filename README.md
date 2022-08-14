@@ -1,8 +1,6 @@
 # SusBotNinja
 Newest SusBot flavour... I would say it taste like a ninja, but ninjas are faster than taste itself.
 
-Tutorial for installing: https://www.youtube.com/watch?v=CVW3RJPLLvc
-
 # -------
     Written for Python 3.10.5 on Windows 10
 # -------
