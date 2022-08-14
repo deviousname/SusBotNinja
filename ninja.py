@@ -222,7 +222,13 @@ class SusBot():
         self.image = PIL.Image.open(f'{chart}.png').convert('RGB')
         self.cache = self.image.load()
         
+    def clear_cookies(self, url):
+        driver.get(url)
+        driver.delete_all_cookies()
+        
     def login(self):
+        if autologin == True:
+            self.clear_cookies('https://reddit.com')
         driver.get("https://pixelplace.io/api/sso.php?type=2&action=login")
         driver.find_element(By.ID,'loginUsername').send_keys(crewmate.username)
         driver.find_element(By.ID,'loginPassword').send_keys(crewmate.password)
