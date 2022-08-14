@@ -41,7 +41,7 @@ max_speed = 0.016  # this is the max speed you should go before rate limiting oc
 speed = regular_speed # Set speed here
 #--|###############|--# Recommend: speed = regular_speed
 
-chart = 39158 # 59975
+chart = 7
 unit_measurement = 'pixels'
 stop_key = 'shift+d'
 autologin = False
