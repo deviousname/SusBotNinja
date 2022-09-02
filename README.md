@@ -14,7 +14,7 @@ Newest SusBot flavour... I would say it taste like a ninja, but ninjas are faste
 
 # -------
     After all the libraries are installed you can double-click
-    SusBotNinja.py to run it, it will open pixelplace
+    Ninja.py to run it, it will open pixelplace
     then you should log in to pixelplace, and once you do
     it will detect that you are logged in and the hotkeys will turn
     on and display the controls in the console that opened.
